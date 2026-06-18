@@ -11,9 +11,10 @@ interface OrderCardProps {
   order: Order;
   onAccept: (id: string) => void;
   onDecline: (id: string) => void;
+  disabled?: boolean;
 }
 
-export function OrderCard({ order, onAccept, onDecline }: OrderCardProps) {
+export function OrderCard({ order, onAccept, onDecline, disabled = false }: OrderCardProps) {
   const { theme, t, isRTL } = useApp();
   const c = theme.colors;
   const [expanded, setExpanded] = useState(false);
@@ -96,11 +97,11 @@ export function OrderCard({ order, onAccept, onDecline }: OrderCardProps) {
           style={styles.declineBtn}
         />
         <Button
-          label={t('accept')}
+          label={disabled ? t('orderLimitReached') : t('accept')}
           onPress={() => onAccept(order.id)}
           variant="primary"
           size="md"
-          style={styles.acceptBtn}
+          style={[styles.acceptBtn, disabled && { opacity: 0.5 }]}
           fullWidth
         />
       </View>

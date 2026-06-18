@@ -9,7 +9,7 @@ import { useOrders } from '@/hooks/useOrders';
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { theme, t } = useApp();
-  const { activeOrder, pendingOrders } = useOrders();
+  const { activeOrders, pendingOrders } = useOrders();
   const c = theme.colors;
 
   const tabBarStyle = {
@@ -71,12 +71,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <View>
               <MaterialIcons name="directions-bike" size={size} color={color} />
-              {activeOrder && (
+              {activeOrders.length > 0 && (
                 <View style={{
                   position: 'absolute', top: -4, right: -6,
-                  width: 10, height: 10, borderRadius: 5,
-                  backgroundColor: '#4CAF50',
-                }} />
+                  width: 16, height: 16, borderRadius: 8,
+                  backgroundColor: '#4CAF50', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Text style={{ fontSize: 9, fontWeight: '800', color: '#fff' }}>{activeOrders.length}</Text>
+                </View>
               )}
             </View>
           ),

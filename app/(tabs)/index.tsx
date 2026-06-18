@@ -16,15 +16,16 @@ import { Order } from '@/services/mockData';
 
 export default function OrdersScreen() {
   const { theme, t, isRTL } = useApp();
-  const { pendingOrders, activeOrder, acceptOrder, declineOrder, isOnline } = useOrders();
+  const { pendingOrders, activeOrders, adminConfig, acceptOrder, declineOrder, isOnline, canAcceptOrder } = useOrders();
   const { showAlert } = useAlert();
   const c = theme.colors;
 
+  const limitReached = !canAcceptOrder();
+
   const handleAccept = (id: string) => {
-    if (activeOrder) {
-      showAlert(t('newOrder'), 'You already have an active delivery. Complete it first.', [
-        { text: t('ok'), style: 'default' },
-      ]);
+    if (limitReached) {
+      const msg = t('orderLimitMessage').replace('{limit}', String(adminConfig.max_simultaneous_orders));
+      showAlert(t('orderLimitReached'), msg, [{ text: t('ok'), style: 'default' }]);
       return;
     }
     acceptOrder(id);
@@ -52,20 +53,54 @@ export default function OrdersScreen() {
       <StatusBar barStyle={theme.isDark ? 'light-content' : 'dark-content'} backgroundColor={c.surface} />
       <Header showOnlineToggle />
 
-      {/* Online status banner */}
+      {/* Offline banner */}
       {!isOnline && (
-        <View style={[styles.offlineBanner, { backgroundColor: c.error + '22', borderColor: c.error }]}>
-          <MaterialIcons name="wifi-off" size={16} color={c.error} />
-          <Text style={[styles.offlineText, { color: c.error }]}>  {t('offline_status')} — {t('goOnline')} to receive orders</Text>
+        <View style={[styles.banner, { backgroundColor: c.error + '18', borderColor: c.error }]}>
+          <MaterialIcons name="wifi-off" size={15} color={c.error} />
+          <Text style={[styles.bannerText, { color: c.error }]}>
+            {'  '}{t('offline_status')} — {t('goOnline')} to receive orders
+          </Text>
         </View>
       )}
 
-      {/* Active order banner */}
-      {activeOrder && (
-        <View style={[styles.activeBanner, { backgroundColor: Colors.primary + '22', borderColor: Colors.primary }]}>
-          <MaterialIcons name="directions-bike" size={16} color={Colors.primary} />
+      {/* Dynamic order limit indicator */}
+      <View style={[styles.limitBar, { backgroundColor: c.surface, borderBottomColor: c.border, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={[styles.limitLeft, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <MaterialIcons name="layers" size={15} color={limitReached ? c.error : Colors.primary} />
+          <Text style={[styles.limitLabel, { color: limitReached ? c.error : c.textSecondary }]}>
+            {'  '}{t('activeOrders')}: {activeOrders.length}/{adminConfig.max_simultaneous_orders}
+          </Text>
+        </View>
+        {/* Progress dots */}
+        <View style={[styles.limitDots, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          {Array.from({ length: adminConfig.max_simultaneous_orders }).map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.limitDot,
+                { backgroundColor: i < activeOrders.length ? (limitReached ? c.error : Colors.primary) : c.border },
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Limit reached warning */}
+      {limitReached && (
+        <View style={[styles.banner, { backgroundColor: c.error + '18', borderColor: c.error }]}>
+          <MaterialIcons name="block" size={15} color={c.error} />
+          <Text style={[styles.bannerText, { color: c.error }]}>
+            {'  '}{t('orderLimitReached')} — {t('maxOrders')}: {adminConfig.max_simultaneous_orders}
+          </Text>
+        </View>
+      )}
+
+      {/* Active orders mini-strip */}
+      {activeOrders.length > 0 && (
+        <View style={[styles.activeStrip, { flexDirection: isRTL ? 'row-reverse' : 'row', backgroundColor: Colors.primary + '18', borderColor: Colors.primary }]}>
+          <MaterialIcons name="directions-bike" size={15} color={Colors.primary} />
           <Text style={[styles.activeBannerText, { color: Colors.primary }]}>
-            {'  '}{t('activeDelivery')}: {t('orderID')}{activeOrder.orderNumber}
+            {'  '}{activeOrders.length} {t('activeDelivery')}{activeOrders.length > 1 ? 's' : ''}: {activeOrders.map((o) => `#${o.orderNumber}`).join(', ')}
           </Text>
         </View>
       )}
@@ -88,6 +123,7 @@ export default function OrdersScreen() {
             order={item}
             onAccept={handleAccept}
             onDecline={handleDecline}
+            disabled={limitReached}
           />
         )}
         ListEmptyComponent={renderEmpty}
@@ -99,10 +135,8 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  offlineBanner: {
+  screen: { flex: 1 },
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
     margin: Spacing.md,
@@ -111,15 +145,38 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     borderWidth: 1,
   },
-  offlineText: {
+  bannerText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
-  activeBanner: {
+  limitBar: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  limitLeft: {
+    alignItems: 'center',
+  },
+  limitLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  limitDots: {
+    gap: 6,
+    alignItems: 'center',
+  },
+  limitDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  activeStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: Spacing.md,
-    marginBottom: 0,
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
     padding: Spacing.sm,
     borderRadius: Radius.sm,
     borderWidth: 1,
@@ -127,6 +184,7 @@ const styles = StyleSheet.create({
   activeBannerText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    flex: 1,
   },
   sectionHeader: {
     paddingHorizontal: Spacing.md,

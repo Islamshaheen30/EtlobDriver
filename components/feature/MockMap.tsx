@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize, FontWeight } from '@/constants/theme';
 import { useApp } from '@/hooks/useApp';
+import { useOrders } from '@/hooks/useOrders';
 
 const { width } = Dimensions.get('window');
 
@@ -13,13 +14,21 @@ interface MockMapProps {
   showRoute?: boolean;
 }
 
-export function MockMap({ pickupLabel = 'Restaurant', dropoffLabel = 'Customer', height = 220, showRoute = true }: MockMapProps) {
-  const { theme } = useApp();
+export function MockMap({
+  pickupLabel = 'Restaurant',
+  dropoffLabel = 'Customer',
+  height = 220,
+  showRoute = true,
+}: MockMapProps) {
+  const { theme, t } = useApp();
+  const { riderLocation, isLocationSharing, locationPermissionDenied } = useOrders();
   const c = theme.colors;
   const isDark = theme.isDark;
 
   const pulseAnim = useRef(new Animated.Value(0.6)).current;
-  const bikeAnim = useRef(new Animated.Value(0)).current;
+  const bikeX = useRef(new Animated.Value(0)).current;
+  const bikeY = useRef(new Animated.Value(0)).current;
+  const gpsPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.loop(
@@ -31,18 +40,38 @@ export function MockMap({ pickupLabel = 'Restaurant', dropoffLabel = 'Customer',
 
     if (showRoute) {
       Animated.loop(
-        Animated.timing(bikeAnim, { toValue: 1, duration: 2500, useNativeDriver: true })
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(bikeX, { toValue: 1, duration: 2800, useNativeDriver: true }),
+            Animated.timing(bikeY, { toValue: 1, duration: 2800, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(bikeX, { toValue: 0, duration: 0, useNativeDriver: true }),
+            Animated.timing(bikeY, { toValue: 0, duration: 0, useNativeDriver: true }),
+          ]),
+        ])
       ).start();
     }
   }, [showRoute]);
 
+  // GPS pulse ring
+  useEffect(() => {
+    if (isLocationSharing) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(gpsPulse, { toValue: 2.2, duration: 1200, useNativeDriver: true }),
+          Animated.timing(gpsPulse, { toValue: 1, duration: 0, useNativeDriver: true }),
+        ])
+      ).start();
+    }
+  }, [isLocationSharing]);
+
   const mapBg = isDark ? '#1A2820' : '#E8F0E8';
-  const roadColor = isDark ? '#2A3828' : '#C8D8C8';
   const gridColor = isDark ? '#1E2E1E' : '#D8E8D8';
 
   return (
     <View style={[styles.container, { height, backgroundColor: mapBg, borderRadius: Radius.lg, overflow: 'hidden' }]}>
-      {/* Grid lines */}
+      {/* Grid */}
       {Array.from({ length: 8 }).map((_, i) => (
         <View key={`h${i}`} style={[styles.gridLineH, { backgroundColor: gridColor, top: (height / 8) * i }]} />
       ))}
@@ -50,7 +79,7 @@ export function MockMap({ pickupLabel = 'Restaurant', dropoffLabel = 'Customer',
         <View key={`v${i}`} style={[styles.gridLineV, { backgroundColor: gridColor, left: (width / 6) * i }]} />
       ))}
 
-      {/* Route line */}
+      {/* Route */}
       {showRoute && (
         <View style={styles.routeContainer}>
           <View style={[styles.routeLine, { backgroundColor: Colors.primary + '44' }]} />
@@ -80,7 +109,7 @@ export function MockMap({ pickupLabel = 'Restaurant', dropoffLabel = 'Customer',
         </View>
       </View>
 
-      {/* Rider bike icon */}
+      {/* Animated rider bike */}
       {showRoute && (
         <Animated.View
           style={[
@@ -88,13 +117,13 @@ export function MockMap({ pickupLabel = 'Restaurant', dropoffLabel = 'Customer',
             {
               transform: [
                 {
-                  translateX: bikeAnim.interpolate({
+                  translateX: bikeX.interpolate({
                     inputRange: [0, 1],
                     outputRange: [width * 0.15, width * 0.65],
                   }),
                 },
                 {
-                  translateY: bikeAnim.interpolate({
+                  translateY: bikeY.interpolate({
                     inputRange: [0, 1],
                     outputRange: [height * 0.55, height * 0.2],
                   }),
@@ -103,16 +132,49 @@ export function MockMap({ pickupLabel = 'Restaurant', dropoffLabel = 'Customer',
             },
           ]}
         >
+          {/* GPS accuracy ring */}
+          {isLocationSharing && (
+            <Animated.View
+              style={[
+                styles.gpsRing,
+                { borderColor: Colors.primary + '55', transform: [{ scale: gpsPulse }] },
+              ]}
+            />
+          )}
           <View style={[styles.bikeContainer, { backgroundColor: Colors.primary }]}>
             <MaterialIcons name="directions-bike" size={16} color="#1A1A1A" />
           </View>
         </Animated.View>
       )}
 
-      {/* Map label */}
-      <View style={[styles.mapLabel, { backgroundColor: isDark ? '#00000066' : '#ffffff88' }]}>
-        <MaterialIcons name="map" size={12} color={c.textSecondary} />
-        <Text style={[styles.mapLabelText, { color: c.textSecondary }]}>  Live Navigation</Text>
+      {/* GPS Status badge */}
+      <View
+        style={[
+          styles.mapLabel,
+          { backgroundColor: isDark ? '#00000066' : '#ffffff88' },
+        ]}
+      >
+        <MaterialIcons
+          name={locationPermissionDenied ? 'location-off' : isLocationSharing ? 'my-location' : 'map'}
+          size={12}
+          color={isLocationSharing ? Colors.primary : c.textSecondary}
+        />
+        <Text
+          style={[
+            styles.mapLabelText,
+            { color: isLocationSharing ? Colors.primary : c.textSecondary },
+          ]}
+        >
+          {'  '}
+          {locationPermissionDenied
+            ? t('gpsPermissionDenied')
+            : isLocationSharing
+            ? t('gpsSharing')
+            : 'Live Navigation'}
+        </Text>
+        {isLocationSharing && riderLocation && (
+          <View style={[styles.gpsDot, { backgroundColor: Colors.primary }]} />
+        )}
       </View>
     </View>
   );
@@ -204,6 +266,15 @@ const styles = StyleSheet.create({
   },
   bikeIcon: {
     position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gpsRing: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
   },
   bikeContainer: {
     width: 28,
@@ -226,5 +297,11 @@ const styles = StyleSheet.create({
   },
   mapLabelText: {
     fontSize: FontSize.xs,
+  },
+  gpsDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginLeft: 4,
   },
 });

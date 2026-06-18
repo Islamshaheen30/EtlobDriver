@@ -30,6 +30,29 @@ export const translations = {
     cod: 'Cash on Delivery',
     online: 'Online',
 
+    // Order Proof
+    proofPhotoTitle: 'Order Proof Required',
+    proofPhotoSubtitle: 'Take a photo of the order to confirm pickup',
+    takePhoto: 'Take Photo',
+    choosePhoto: 'Choose from Gallery',
+    proofPhotoSuccess: 'Photo saved successfully',
+    proofRequired: 'Photo proof is required before continuing',
+    skipProof: 'Skip',
+    retakePhoto: 'Retake',
+    usePhoto: 'Use This Photo',
+
+    // Dynamic Order Limit
+    orderLimitReached: 'Order Limit Reached',
+    orderLimitMessage: 'You have reached the maximum of {limit} simultaneous orders. Complete an active order first.',
+    activeOrders: 'Active Orders',
+    maxOrders: 'Max Orders',
+
+    // GPS
+    gpsSharing: 'Sharing your location',
+    gpsOff: 'Location off',
+    gpsPermissionDenied: 'Location permission denied',
+    gpsPermissionMessage: 'Location access is needed to share your position with customers.',
+
     // Active Delivery
     activeDelivery: 'Active Delivery',
     noActiveDelivery: 'No active delivery',
@@ -123,6 +146,29 @@ export const translations = {
     payment: 'الدفع',
     cod: 'الدفع عند الاستلام',
     online: 'أونلاين',
+
+    // Order Proof
+    proofPhotoTitle: 'مطلوب إثبات الطلب',
+    proofPhotoSubtitle: 'التقط صورة للطلب لتأكيد الاستلام',
+    takePhoto: 'التقاط صورة',
+    choosePhoto: 'اختر من المعرض',
+    proofPhotoSuccess: 'تم حفظ الصورة بنجاح',
+    proofRequired: 'يجب التقاط صورة الإثبات قبل المتابعة',
+    skipProof: 'تخطي',
+    retakePhoto: 'إعادة التصوير',
+    usePhoto: 'استخدام هذه الصورة',
+
+    // Dynamic Order Limit
+    orderLimitReached: 'تم بلوغ الحد الأقصى',
+    orderLimitMessage: 'لقد وصلت إلى الحد الأقصى وهو {limit} طلبات متزامنة. أكمل طلبًا نشطًا أولًا.',
+    activeOrders: 'الطلبات النشطة',
+    maxOrders: 'الحد الأقصى',
+
+    // GPS
+    gpsSharing: 'يتم مشاركة موقعك',
+    gpsOff: 'الموقع متوقف',
+    gpsPermissionDenied: 'تم رفض إذن الموقع',
+    gpsPermissionMessage: 'يحتاج التطبيق إلى الوصول للموقع لمشاركته مع العملاء.',
 
     // Active Delivery
     activeDelivery: 'التوصيل الحالي',

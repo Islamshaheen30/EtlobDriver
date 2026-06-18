@@ -10,6 +10,16 @@ export type OrderStatus =
 
 export type PaymentMethod = 'cod' | 'online';
 
+export interface AdminConfig {
+  max_simultaneous_orders: number;
+  proof_photo_required: boolean;
+}
+
+export const mockAdminConfig: AdminConfig = {
+  max_simultaneous_orders: 2,
+  proof_photo_required: true,
+};
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -33,6 +43,7 @@ export interface Order {
   acceptedAt?: Date;
   deliveredAt?: Date;
   rating?: number;
+  proofPhotoUri?: string;
 }
 
 export interface EarningRecord {
