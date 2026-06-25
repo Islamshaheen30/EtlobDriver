@@ -1,6 +1,6 @@
 import React, { createContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import * as Location from 'expo-location';
-import { getSharedSupabaseClient } from '@/template/core/client';
+import { supabase } from '@/services/supabaseClient';
 import { Order, OrderStatus, DriverProfile, AdminConfig } from '@/services/mockData';
 
 export interface RiderLocation {
@@ -35,7 +35,6 @@ interface OrderContextType {
 export const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export function OrderProvider({ children }: { children: ReactNode }) {
-  const supabase = getSharedSupabaseClient();
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [deliveredOrders, setDeliveredOrders] = useState<Order[]>([]);
