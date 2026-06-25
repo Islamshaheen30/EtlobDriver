@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Platform, View } from 'react-native';
+import { Platform, View, Text } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { useApp } from '@/hooks/useApp';
 import { useOrders } from '@/hooks/useOrders';
